@@ -1,6 +1,8 @@
 import { Elysia } from "elysia";
 import { swagger } from "@elysiajs/swagger";
-import { v1 } from "./api/v1";
+import { configDotenv } from "dotenv"; configDotenv();
+
+import api from "./api";
 
 const app = new Elysia()
   .use(swagger({
@@ -12,7 +14,7 @@ const app = new Elysia()
       },
     }
   }))
-  .use(v1)
+  .use(api)
   .listen(process.env.PORT || 3000);
 
 console.log(
