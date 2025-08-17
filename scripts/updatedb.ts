@@ -7,7 +7,7 @@ import * as csv from "fast-csv";
 
 import db from "../src/db";
 import { airlines, airports } from "../src/db/schema";
-import { AirlineType, AirportType } from "../src/types";
+import { AirlineType, AirportType } from "../src/lib/types";
 
 console.log("Updating database...");
 

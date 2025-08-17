@@ -1,7 +1,7 @@
 import Elysia, { t } from "elysia";
 import db from "../../../db";
 import { airports } from "../../../db/schema";
-import { AirportType } from "../../../types";
+import { AirportType } from "../../../lib/types";
 import { eq, ilike, or } from "drizzle-orm";
 
 export default new Elysia({ prefix: "/airports" })
