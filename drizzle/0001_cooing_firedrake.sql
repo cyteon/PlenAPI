@@ -1,0 +1,1 @@
+ALTER TABLE "aircraft_registrations" ADD COLUMN "type" text NOT NULL;

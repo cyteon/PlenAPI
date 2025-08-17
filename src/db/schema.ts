@@ -31,3 +31,18 @@ export const airports = pgTable("airports", {
     home_link: text("home_link"),
     wikipedia_link: text("wikipedia_link"),
 });
+
+export const aircraftRegistrations = pgTable("aircraft_registrations", {
+    id: serial("id").primaryKey(),
+    type: text("type").notNull(),
+    icao_type: text("icao_type").notNull(),
+    manufacturer: text("manufacturer").notNull(),
+    mode_s: text("mode_s").notNull(),
+    registration: text("registration").notNull(),
+    registered_owner_country_iso_name: text("registered_owner_country_iso_name"),
+    registered_owner_country_name: text("registered_owner_country_name"),
+    registered_owner_operator_flag_code: text("registered_owner_operator_flag_code"),
+    registered_owner: text("registered_owner"),
+    url_photo: text("url_photo"),
+    url_photo_thumbnail: text("url_photo_thumbnail"),
+});

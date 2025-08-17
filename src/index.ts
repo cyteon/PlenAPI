@@ -1,4 +1,4 @@
-import { Elysia } from "elysia";
+import { Elysia, redirect } from "elysia";
 import { swagger } from "@elysiajs/swagger";
 import { configDotenv } from "dotenv"; configDotenv();
 
@@ -14,6 +14,9 @@ const app = new Elysia()
       },
     }
   }))
+  .get("/", () => {
+    return redirect("/swagger");
+  }, { detail: { hide: true } })
   .use(api)
   .listen(process.env.PORT || 3000);
 
