@@ -1,21 +1,24 @@
 import Elysia, { t } from "elysia";
-import { getAirlines } from "./data";
+import db from "../../../db";
+import { airlines } from "../../../db/schema";
+import { AirlineType } from "../../../types";
+import { eq, ilike, or } from "drizzle-orm";
 
 export default new Elysia({ prefix: "/airlines" })
     .get(
         "/all", 
         async () => {
-            return await getAirlines();
+            return (await db.select().from(airlines).execute()) as AirlineType[];
         }, 
         { 
-            detail: { tags: ["Airlines"] },
+            detail: { tags: ["Airlines"], description: "Get all airlines" },
             response: {
                 200: t.Array(t.Object({
-                    id: t.String({ description: "The ID of the airline" }),
+                    id: t.Number({ description: "The ID of the airline" }),
                     name: t.String({ description: "The name of the airline" }),
-                    alias: t.Optional(t.String({ description: "The alias of the airline" })),
-                    iata: t.Optional(t.String({ description: "The IATA code of the airline" })),
-                    icao: t.Optional(t.String({ description: "The ICAO code of the airline" })),
+                    alias: t.Nullable(t.String({ description: "The alias of the airline" })),
+                    iata: t.Nullable(t.String({ description: "The IATA code of the airline" })),
+                    icao: t.Nullable(t.String({ description: "The ICAO code of the airline" })),
                     callsign: t.String({ description: "The callsign of the airline" }),
                     country: t.String({ description: "The country of the airline" }),
                     active: t.String({ description: "Whether the airline is active or not (Y/N)" }),
@@ -32,23 +35,27 @@ export default new Elysia({ prefix: "/airlines" })
                 return status(400, { error: "You must provide either a 'query' or 'id' parameter" });
             }
 
-            const airlines = await getAirlines();
             
             if (id) {
-                const airline = airlines.find(airline => airline.id === id);
-
-                if (airline) {
-                    return [airline];
-                } else {
+                const airline = await db.select().from(airlines).where(eq(airlines.id, id)).execute();
+                if (airline.length === 0) {
                     return status(400, { error: "Airline not found" });
                 }
+
+                return airline as AirlineType[];
             }
 
-            return airlines.filter(airline =>
-                airline.name.toLowerCase().includes(searchQuery!.toLowerCase()) ||
-                (airline.iata && airline.iata.toLowerCase().includes(searchQuery!.toLowerCase())) ||
-                (airline.icao && airline.icao.toLowerCase().includes(searchQuery!.toLowerCase()))
-            );
+            const results = await db.select().from(airlines).where(
+                or(
+                    ilike(airlines.name, `%${searchQuery}%`),
+                    or(
+                        ilike(airlines.iata, `%${searchQuery}%`),
+                        ilike(airlines.icao, `%${searchQuery}%`),
+                    )
+                )
+            ).execute()
+            
+            return results as AirlineType[];
         },
         {
             detail: { 
@@ -61,11 +68,11 @@ export default new Elysia({ prefix: "/airlines" })
             }),
             response: {
                 200: t.Array(t.Object({
-                    id: t.String({ description: "The ID of the airline" }),
+                    id: t.Number({ description: "The ID of the airline" }),
                     name: t.String({ description: "The name of the airline" }),
-                    alias: t.Optional(t.String({ description: "The alias of the airline" })),
-                    iata: t.Optional(t.String({ description: "The IATA code of the airline" })),
-                    icao: t.Optional(t.String({ description: "The ICAO code of the airline" })),
+                    alias: t.Nullable(t.String({ description: "The alias of the airline" })),
+                    iata: t.Nullable(t.String({ description: "The IATA code of the airline" })),
+                    icao: t.Nullable(t.String({ description: "The ICAO code of the airline" })),
                     callsign: t.String({ description: "The callsign of the airline" }),
                     country: t.String({ description: "The country of the airline" }),
                     active: t.String({ description: "Whether the airline is active or not (Y/N)" }),

@@ -1,14 +1,17 @@
 import Elysia, { t } from "elysia";
-import { getAirports } from "./data";
+import db from "../../../db";
+import { airports } from "../../../db/schema";
+import { AirportType } from "../../../types";
+import { eq, ilike, or } from "drizzle-orm";
 
 export default new Elysia({ prefix: "/airports" })
     .get(
         "/all",
         async () => {
-            return await getAirports();
+            return (await db.select().from(airports).execute()) as AirportType[];
         },
         {
-            detail: { tags: ["Airports"] },
+            detail: { tags: ["Airports"], description: "Get all airports" },
             response: {
                 200: t.Array(
                     t.Object({
@@ -44,24 +47,25 @@ export default new Elysia({ prefix: "/airports" })
                 return status(400, { error: "You must provide either a 'query' or 'id' parameter" });
             }
 
-            const airports = await getAirports();
-
             if (id) {
-                const airport = airports.find(airport => airport.id === id);
+                const airport = await db.select().from(airports).where(eq(airports.id, id)).execute();
 
-                if (airport) {
-                    return [airport];
-                } else {
+                if (airport.length === 0) {
                     return status(400, { error: "Airport not found" });
                 }
+
+                return airport as AirportType[];
             }
 
-            return airports.filter(airport =>
-                airport.name.toLowerCase().includes(searchQuery!.toLowerCase()) ||
-                (airport.iata_code && airport.iata_code.toLowerCase().includes(searchQuery!.toLowerCase())) ||
-                (airport.icao_code && airport.icao_code.toLowerCase().includes(searchQuery!.toLowerCase())) ||
-                (airport.identifier && airport.identifier.toLowerCase().includes(searchQuery!.toLowerCase()))
-            );
+            const results = await db.select().from(airports).where(
+                or(
+                    ilike(airports.name, `%${searchQuery}%`),
+                    or(
+                        ilike(airports.iata_code, `%${searchQuery}%`),
+                        ilike(airports.icao_code, `%${searchQuery}%`),
+                    )
+                )
+            ).execute();
         },
         {
             detail: {
