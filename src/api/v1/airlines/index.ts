@@ -53,7 +53,7 @@ export default new Elysia({ prefix: "/airlines" })
                         ilike(airlines.icao, `%${searchQuery}%`),
                     )
                 )
-            ).execute()
+            ).execute();
             
             return results as AirlineType[];
         },

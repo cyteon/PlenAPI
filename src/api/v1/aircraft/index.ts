@@ -1,7 +1,8 @@
 import Elysia, { t } from "elysia";
 import db from "../../../db";
 import { aircraftRegistrations } from "../../../db/schema";
-import { eq, or } from "drizzle-orm";
+import { ilike, or } from "drizzle-orm";
+
 
 export default new Elysia({ prefix: "/aircraft" })
     .get(
@@ -13,30 +14,9 @@ export default new Elysia({ prefix: "/aircraft" })
                 return status(400, { error: "You must provide a 'id' parameter" });
             }
 
-            let aircraft = await db.select().from(aircraftRegistrations).where(
-                or(
-                    eq(aircraftRegistrations.registration, id),
-                    eq(aircraftRegistrations.mode_s, id)
-                )
-            ).execute();
+            const aircraft = await getAircraftByReg(id);
 
-            if (aircraft.length === 0) {
-                const res = await fetch(`https://api.adsbdb.com/v0/aircraft/${id}`)
-
-                if (!res.ok) {
-                    return status(404, { error: "Aircraft not found" });
-                }
-
-                const data = await res.json();
-                if (!data?.response?.aircraft) {
-                    return status(404, { error: "Aircraft not found" });
-                }
-
-                aircraft[0] = data.response.aircraft;
-                await db.insert(aircraftRegistrations).values(aircraft).onConflictDoNothing().execute();
-            }
-
-            return aircraft[0];
+            return aircraft || status(404, { error: "Aircraft not found" });
         },
         {
             detail: { tags: ["Aircraft"], description: "Get aircraft by registration or Mode S" },
@@ -66,3 +46,30 @@ export default new Elysia({ prefix: "/aircraft" })
             }
         }
     )
+
+export async function getAircraftByReg(id: string) {
+    let aircraft = await db.select().from(aircraftRegistrations).where(
+        or(
+            ilike(aircraftRegistrations.registration, id),
+            ilike(aircraftRegistrations.mode_s, id)
+        )
+    ).execute();
+
+    if (aircraft.length === 0) {
+        const res = await fetch(`https://api.adsbdb.com/v0/aircraft/${id}`)
+
+        if (!res.ok) {
+            return null;
+        }
+
+        const data = await res.json();
+        if (!data?.response?.aircraft) {
+            return null;
+        }
+
+        aircraft[0] = data.response.aircraft;
+        await db.insert(aircraftRegistrations).values(aircraft).onConflictDoNothing().execute();
+    }
+
+    return aircraft[0];
+}

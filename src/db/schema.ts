@@ -1,4 +1,4 @@
-import { boolean, doublePrecision, integer, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, doublePrecision, foreignKey, integer, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
 
 export const airlines = pgTable("airlines", {
     id: serial("id").primaryKey(),
@@ -47,9 +47,42 @@ export const aircraftRegistrations = pgTable("aircraft_registrations", {
     url_photo_thumbnail: text("url_photo_thumbnail"),
 });
 
+export const callsigns = pgTable("callsigns", {
+    id: serial("id").primaryKey(),
+    callsign: text("callsign").notNull(),
+    callsign_icao: text("callsign_icao"),
+    callsign_iata: text("callsign_iata"),
+    
+    airline_name: text("airline_name"),
+    airline_icao: text("airline_icao"),
+    airline_iata: text("airline_iata"),
+    airline_country: text("airline_country"),
+    airline_country_iso: text("airline_country_iso"),
+    airline_callsign: text("airline_callsign"),
+
+    origin_country_iso_name: text("origin_country_iso_name"),
+    origin_country_name: text("origin_country_name"),
+    origin_elevation: integer("origin_elevation"),
+    origin_iata_code: text("origin_iata_code"),
+    origin_icao_code: text("origin_icao_code"),
+    origin_latitude: doublePrecision("origin_latitude"),
+    origin_longitude: doublePrecision("origin_longitude"),
+    origin_municipality: text("origin_municipality"),
+    origin_name: text("origin_name"),
+    
+    destination_country_iso_name: text("destination_country_iso_name"),
+    destination_country_name: text("destination_country_name"),
+    destination_elevation: integer("destination_elevation"),
+    destination_iata_code: text("destination_iata_code"),
+    destination_icao_code: text("destination_icao_code"),
+    destination_latitude: doublePrecision("destination_latitude"),
+    destination_longitude: doublePrecision("destination_longitude"),
+    destination_municipality: text("destination_municipality"),
+    destination_name: text("destination_name")
+});
 
 // every plane currently in the sky, updated every 30 seconds from opensky network
-export  const flights = pgTable("flights", {
+export const flights = pgTable("flights", {
     id: serial("id").primaryKey(),
     icao24: text("icao24").notNull(),
     callsign: text("callsign"),
@@ -70,3 +103,20 @@ export  const flights = pgTable("flights", {
     position_source: integer("position_source").notNull(),
     category: integer("category"),
 });
+
+// this is for my app :)
+export const users = pgTable("users", {
+    id: serial("id").primaryKey(),
+    email: text("email").notNull().unique(),
+    password: text("password").notNull(),
+    created_at: timestamp("created_at").notNull().defaultNow(),
+    updated_at: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const tokens = pgTable("tokens", {
+    id: serial("id").primaryKey(),
+    user_id: integer("user_id").notNull(),
+    token: text("token").notNull(),
+}, (table) => ({
+    userForeignKey: foreignKey({ name: "user_fk", columns: [table.user_id], foreignColumns: [users.id] }),
+}));

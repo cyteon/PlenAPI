@@ -42,7 +42,8 @@ async function updateFlights() {
     });
 
     if (!res.ok) {
-        console.error("Failed to fetch flights data:", res.statusText);
+        console.error("Failed to fetch flights data: ", res.statusText);
+        console.error("Response body:", await res.text());
         return;
     }
 

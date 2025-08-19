@@ -4,6 +4,7 @@ import { configDotenv } from "dotenv"; configDotenv();
 import { start } from "./lib/flights";
 
 import api from "./api";
+import cors from "@elysiajs/cors";
 
 const app = new Elysia()
   .use(swagger({
@@ -14,6 +15,10 @@ const app = new Elysia()
         description: "A free and open-source aviation API for developers",
       },
     }
+  }))
+  .use(cors({
+    origin: "*",
+
   }))
   .get("/", () => {
     return redirect("/swagger");
