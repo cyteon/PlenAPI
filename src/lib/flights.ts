@@ -4,8 +4,13 @@ import { flights } from "../db/schema";
 let openSkyToken: string | null = null;
 
 export async function start() {
-    await generateToken();
-    await updateFlights();
+    try {
+        await generateToken();
+        await updateFlights();
+    } catch (error) {
+        console.error("Error during initial setup:", error);
+        return;
+    }
 
     setInterval(
         async () => {
@@ -42,9 +47,7 @@ async function updateFlights() {
     });
 
     if (!res.ok) {
-        console.error("Failed to fetch flights data: ", res.statusText);
-        console.error("Response body:", await res.text());
-        return;
+        throw new Error(`Failed to fetch flights data: ${res.statusText}`);
     }
 
     const data = await res.json();

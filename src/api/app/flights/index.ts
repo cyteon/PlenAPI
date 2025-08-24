@@ -2,6 +2,7 @@ import Elysia, { t } from "elysia";
 import db from "../../../db";
 import { flights } from "../../../db/schema";
 import { ilike } from "drizzle-orm";
+import { verifyRequest } from "../auth";
 
 
 const categories = `Aircraft category. 
@@ -30,7 +31,13 @@ const categories = `Aircraft category.
 export default new Elysia({ prefix: "/flights" })
     .get(
         "/all",
-        async () => {
+        async ({ headers }) => {
+            const user = await verifyRequest(headers);
+
+            if (!user) {
+                return { error: "Unauthorized" };
+            }
+
             const data = await db.select({
                 icao24: flights.icao24,
                 longitude: flights.longitude,
@@ -60,7 +67,13 @@ export default new Elysia({ prefix: "/flights" })
         }
     )
     .get("/callsign/:callsign",
-        async ({ params, status }) => {
+        async ({ params, status, headers }) => {
+            const user = await verifyRequest(headers);
+
+            if (!user) {
+                return status(401, { error: "Unauthorized" });
+            }
+
             const { callsign } = params;
 
             console.log("Fetching flights with callsign:", callsign);
