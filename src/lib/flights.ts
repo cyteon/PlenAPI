@@ -40,7 +40,7 @@ export async function start() {
 async function updateFlights() {
     await db.delete(flights).execute();
 
-    const res = await fetch("https://opensky-network.org/api/states/all", {
+    const res = await fetch("https://opensky-network.org/api/states/all?extended=1", {
         headers: {
             "Authorization": `Bearer ${openSkyToken}`
         },

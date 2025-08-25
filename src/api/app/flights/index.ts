@@ -3,6 +3,7 @@ import db from "../../../db";
 import { flights } from "../../../db/schema";
 import { ilike } from "drizzle-orm";
 import { verifyRequest } from "../auth";
+import { getCallsign } from "../../v1/callsign";
 
 
 const categories = `Aircraft category. 
@@ -42,14 +43,16 @@ export default new Elysia({ prefix: "/flights" })
                 icao24: flights.icao24,
                 longitude: flights.longitude,
                 latitude: flights.latitude,
-                trueTrack: flights.true_track
+                trueTrack: flights.true_track,
+                category: flights.category
             }).from(flights).execute();
 
             return data.map(flight => ({
                 icao24: flight.icao24,
                 longitude: flight.longitude,
                 latitude: flight.latitude,
-                trueTrack: flight.trueTrack
+                trueTrack: flight.trueTrack,
+                category: flight.category
             }));
         },
         { 
@@ -61,12 +64,13 @@ export default new Elysia({ prefix: "/flights" })
                         longitude: t.Nullable(t.Number({ description: "WGS-84 longitude in decimal degrees." })),
                         latitude: t.Nullable(t.Number({ description: "WGS-84 latitude in decimal degrees." })),
                         trueTrack: t.Nullable(t.Number({ description: "True track in decimal degrees clockwise from north (north=0°)." })),
+                        category: t.Nullable(t.Number({ description: categories }))
                     })
                 )
             }
         }
     )
-    .get("/callsign/:callsign",
+    .get("/icao24/:icao24",
         async ({ params, status, headers }) => {
             const user = await verifyRequest(headers);
 
@@ -74,18 +78,20 @@ export default new Elysia({ prefix: "/flights" })
                 return status(401, { error: "Unauthorized" });
             }
 
-            const { callsign } = params;
+            const { icao24 } = params;
 
-            console.log("Fetching flights with callsign:", callsign);
-            if (!callsign) {
-                return status(400, { error: "You must provide a 'callsign' parameter" });
+            console.log("Fetching flights with icao24:", icao24);
+            if (!icao24) {
+                return status(400, { error: "You must provide a 'icao24' parameter" });
             }
 
-            const data = await db.select().from(flights).where(ilike(flights.callsign, `%${callsign}%`)).execute();
+            const data = await db.select().from(flights).where(ilike(flights.icao24, `%${icao24}%`)).execute();
 
             if (data.length === 0) {
-                return status(404, { error: "No flights found with the given callsign" });
+                return status(404, { error: "No flights found with the given icao24" });
             }
+
+            let callsignData = await getCallsign(data[0].callsign);
 
             return data.map(flight => ({
                 icao24: flight.icao24,
@@ -105,13 +111,14 @@ export default new Elysia({ prefix: "/flights" })
                 squawk: flight.squawk,
                 spi: flight.spi === "true",
                 positionSource: flight.position_source,
-                category: flight.category
+                category: flight.category,
+                callsignData: callsignData
             }))[0];
         },
         {
-            detail: { tags: ["Flights"], description: "Get flights by callsign" }, // TODO: hide from swagger
+            detail: { tags: ["Flights"], description: "Get flights by icao24" }, // TODO: hide from swagger
             params: t.Object({
-                callsign: t.String({ description: "The callsign of the flight" })
+                icao24: t.String({ description: "The icao24 of the flight" })
             }),
             response: {
                 200: t.Object({
@@ -132,7 +139,8 @@ export default new Elysia({ prefix: "/flights" })
                     squawk: t.Nullable(t.String({ description: "The transponder code aka Squawk." })),
                     spi: t.Boolean({ description: "Whether flight status indicates special purpose indicator." }),
                     positionSource: t.Number({ description: "Origin of this state's position.\n- 0 = ADS-B\n- 1 = ASTERIX\n- 2 = FLARM\n- 3 = MLAT\n- 4 = FLARM+MLAT" }),
-                    category: t.Nullable(t.String({ description: categories }))
+                    category: t.Nullable(t.Number({ description: categories })),
+                    callsignData: t.Any(),
                 }),
                 400: t.Object({
                     error: t.String({ description: "Error message" })
