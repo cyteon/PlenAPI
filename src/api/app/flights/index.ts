@@ -45,6 +45,7 @@ export default new Elysia({ prefix: "/flights" })
                 latitude: flights.latitude,
                 trueTrack: flights.true_track,
                 icaoAircraftClass: aircraft.icaoAircraftClass,
+                squawk: flights.squawk
             }).from(flights).leftJoin(aircraft, eq(flights.icao24, aircraft.icao24)).execute();
 
             return data.map(flight => ({
@@ -53,6 +54,7 @@ export default new Elysia({ prefix: "/flights" })
                 latitude: flight.latitude,
                 trueTrack: flight.trueTrack,
                 iac: flight.icaoAircraftClass || null,
+                em: flight.squawk === "7700" || flight.squawk === "7600" || flight.squawk === "7500" ? true : undefined
             }));
         },
         { 
@@ -65,6 +67,7 @@ export default new Elysia({ prefix: "/flights" })
                         latitude: t.Nullable(t.Number({ description: "WGS-84 latitude in decimal degrees." })),
                         trueTrack: t.Nullable(t.Number({ description: "True track in decimal degrees clockwise from north (north=0°)." })),
                         iac: t.Nullable(t.String({ description: "ICAO Aircraft Class" })),
+                        em: t.Optional(t.Boolean({ description: "If aircraft is an emergency or not" }))
                     })
                 )
             }
