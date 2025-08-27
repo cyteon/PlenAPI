@@ -6,14 +6,13 @@ import fs from "node:fs";
 import * as csv from "fast-csv";
 
 import db from "../src/db";
-import { airlines, airports } from "../src/db/schema";
+import { aircraft, airlines, airports } from "../src/db/schema";
 import { AirlineType, AirportType } from "../src/lib/types";
 
 console.log("Updating database...");
 
 (async () => {
     let airlinesData: AirlineType[] = [];
-
     fs.createReadStream("static_data/airlines.csv")
         .pipe(csv.parse({ headers: false, skipLines: 1 }))
         .on("error", error => {
@@ -81,5 +80,46 @@ console.log("Updating database...");
             }
 
             console.log("Airports data inserted successfully.");
+        });
+    
+    let aircraftData: any[] = [];
+    fs.createReadStream("static_data/aircraft.csv")
+        .pipe(csv.parse({ headers: false, skipLines: 1, strictColumnHandling: false, ignoreEmpty: true, quote: "'", escape: "'" }))
+        .on("error", error => {
+            console.error("Error reading aircraft data:", error);
+        })
+        .on("data", (row) => {
+            aircraftData.push(row);
+        })
+        .on("end", async () => {
+            console.log("Aircraft data loaded, inserting into database...");
+
+            await db.delete(aircraft);
+
+            for (let i = 0; i < aircraftData.length; i += 1000) {
+                const batch = aircraftData.slice(i, i + 1000).map(row => ({
+                    icao24: row[0],
+                    timestamp: row[1] ? new Date(row[1]) : null,
+                    acars: row[2] === "1",
+                    adsb: row[3] === "1",
+                    built: row[4] ? new Date(row[4]) : null,
+                    categoryDescription: row[5] || null,
+                    country: row[6] || null,
+                    engines: row[7] || null,
+                    firstFlightDate: row[8] ? new Date(row[8]) : null,
+                    firstSeen: row[9] ? new Date(row[9]) : null,
+                    icaoAircraftClass: row[10] || null,
+                    manufacturerIcao: row[12] || null,
+                    manufacturerName: row[13] || null,
+                    model: row[14] || null,
+                    registered: row[25] ? new Date(row[25]) : null,
+                    registration: row[26] || null,
+                    serialNumber: row[28] || null,
+                }));
+
+                await db.insert(aircraft).values(batch).onConflictDoNothing().execute();
+
+                console.log(`Inserting aircraft batch ${Math.ceil(i / 1000) + 1}/${Math.ceil(aircraftData.length / 1000)}`);
+            }
         });
 })()

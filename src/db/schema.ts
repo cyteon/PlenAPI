@@ -81,6 +81,26 @@ export const callsigns = pgTable("callsigns", {
     destination_name: text("destination_name")
 });
 
+export const aircraft = pgTable("aircraft", {
+    icao24: text("icao24").primaryKey(),
+    timestamp: timestamp("timestamp").notNull(),
+    acars: boolean("acars"),
+    adsb: boolean("adsb"),
+    built: timestamp("built"),
+    categoryDescription: text("categoryDescription"),
+    country: text("country"),
+    engines: text("engines"),
+    firstFlightDate: text("firstFlightDate"),
+    firstSeen: timestamp("firstSeen"),
+    icaoAircraftClass: text("icaoAircraftClass"),
+    manufacturerIcao: text("manufacturerIcao"),
+    manufacturerName: text("manufacturerName"),
+    model: text("model"),
+    registered: timestamp("registered"),
+    registration: text("registration"),
+    serialNumber: text("serialNumber"),
+});
+
 // every plane currently in the sky, updated every 30 seconds from opensky network
 export const flights = pgTable("flights", {
     id: serial("id").primaryKey(),

@@ -1,7 +1,7 @@
 import Elysia, { t } from "elysia";
 import db from "../../../db";
-import { flights } from "../../../db/schema";
-import { ilike } from "drizzle-orm";
+import { aircraft, flights } from "../../../db/schema";
+import { eq, ilike } from "drizzle-orm";
 import { verifyRequest } from "../auth";
 import { getCallsign } from "../../v1/callsign";
 
@@ -44,15 +44,15 @@ export default new Elysia({ prefix: "/flights" })
                 longitude: flights.longitude,
                 latitude: flights.latitude,
                 trueTrack: flights.true_track,
-                category: flights.category
-            }).from(flights).execute();
+                icaoAircraftClass: aircraft.icaoAircraftClass,
+            }).from(flights).leftJoin(aircraft, eq(flights.icao24, aircraft.icao24)).execute();
 
             return data.map(flight => ({
                 icao24: flight.icao24,
                 longitude: flight.longitude,
                 latitude: flight.latitude,
                 trueTrack: flight.trueTrack,
-                category: flight.category
+                iac: flight.icaoAircraftClass || null,
             }));
         },
         { 
@@ -64,7 +64,7 @@ export default new Elysia({ prefix: "/flights" })
                         longitude: t.Nullable(t.Number({ description: "WGS-84 longitude in decimal degrees." })),
                         latitude: t.Nullable(t.Number({ description: "WGS-84 latitude in decimal degrees." })),
                         trueTrack: t.Nullable(t.Number({ description: "True track in decimal degrees clockwise from north (north=0°)." })),
-                        category: t.Nullable(t.Number({ description: categories }))
+                        iac: t.Nullable(t.String({ description: "ICAO Aircraft Class" })),
                     })
                 )
             }
@@ -91,7 +91,32 @@ export default new Elysia({ prefix: "/flights" })
                 return status(404, { error: "No flights found with the given icao24" });
             }
 
-            let callsignData = await getCallsign(data[0].callsign);
+            let callsignData;
+
+            try {
+                callsignData = await getCallsign(data[0].callsign);
+            } catch (error) {
+                console.error("Error fetching callsign data:", error);
+                callsignData = null;
+            }
+
+            let icaoData = await db.select().from(aircraft).where(ilike(aircraft.icao24, `%${data[0].icao24}%`)).limit(1).execute();
+            
+            let images = [];
+
+            try {
+                const res = await fetch(`https://airport-data.com/api/ac_thumb.json?m=${data[0].icao24}&n=4`);
+
+                if (res.ok) {
+                    const data = await res.json();
+
+                    if (data.status == 200 && data.data) {
+                        images = data.data.map((img: any) => img.image.replace("thumbnails/", ""));
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching images:", error);
+            }
 
             return data.map(flight => ({
                 icao24: flight.icao24,
@@ -112,7 +137,9 @@ export default new Elysia({ prefix: "/flights" })
                 spi: flight.spi === "true",
                 positionSource: flight.position_source,
                 category: flight.category,
-                callsignData: callsignData
+                callsignData,
+                icaoData: icaoData[0] || null,
+                images
             }))[0];
         },
         {
@@ -140,7 +167,9 @@ export default new Elysia({ prefix: "/flights" })
                     spi: t.Boolean({ description: "Whether flight status indicates special purpose indicator." }),
                     positionSource: t.Number({ description: "Origin of this state's position.\n- 0 = ADS-B\n- 1 = ASTERIX\n- 2 = FLARM\n- 3 = MLAT\n- 4 = FLARM+MLAT" }),
                     category: t.Nullable(t.Number({ description: categories })),
-                    callsignData: t.Any(),
+                    callsignData: t.Any(), // im too lazy to 
+                    icaoData: t.Any(),     // fill these two out
+                    images: t.Array(t.String())
                 }),
                 400: t.Object({
                     error: t.String({ description: "Error message" })
