@@ -58,7 +58,7 @@ export default new Elysia({ prefix: "/flights" })
             }));
         },
         { 
-            detail: { tags: ["Flights"], description: "Get all planes currently in the air, has minimal data" }, // TODO: hide from swagger
+            detail: { tags: ["Flights"], description: "Get all planes currently in the air, has minimal data", hide: true },
             response: {
                 200: t.Array(
                     t.Object({
@@ -148,7 +148,7 @@ export default new Elysia({ prefix: "/flights" })
             }))[0];
         },
         {
-            detail: { tags: ["Flights"], description: "Get flights by icao24" }, // TODO: hide from swagger
+            detail: { tags: ["Flights"], description: "Get flights by icao24", hide: true },
             params: t.Object({
                 icao24: t.String({ description: "The icao24 of the flight" })
             }),
