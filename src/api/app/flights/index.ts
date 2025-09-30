@@ -108,6 +108,7 @@ export default new Elysia({ prefix: "/flights" })
             let images = [];
 
             try {
+                /* deprecated as the url returned dosent work
                 const res = await fetch(`https://airport-data.com/api/ac_thumb.json?m=${data[0].icao24}&n=4`);
 
                 if (res.ok) {
@@ -117,6 +118,7 @@ export default new Elysia({ prefix: "/flights" })
                         images = data.data.map((img: any) => img.image.replace("thumbnails/", ""));
                     }
                 }
+                */
             } catch (error) {
                 console.error("Error fetching images:", error);
             }
