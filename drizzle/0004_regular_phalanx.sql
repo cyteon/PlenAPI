@@ -1,0 +1,1 @@
+ALTER TABLE "aircraft" ALTER COLUMN "timestamp" DROP NOT NULL;

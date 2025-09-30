@@ -83,7 +83,7 @@ export const callsigns = pgTable("callsigns", {
 
 export const aircraft = pgTable("aircraft", {
     icao24: text("icao24").primaryKey(),
-    timestamp: timestamp("timestamp").notNull(),
+    timestamp: timestamp("timestamp"),
     acars: boolean("acars"),
     adsb: boolean("adsb"),
     built: timestamp("built"),

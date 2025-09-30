@@ -29,6 +29,13 @@
       "when": 1759258664118,
       "tag": "0003_fast_blue_marvel",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1759258818819,
+      "tag": "0004_regular_phalanx",
+      "breakpoints": true
     }
   ]
 }
