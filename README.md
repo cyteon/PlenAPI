@@ -2,9 +2,9 @@
 A api collecting aviation data from various free sources
 
 ## Data Sources
-adsbdb: aircraft registration information
-openflight: airline data
-ourairports: airport data
+adsbdb: aircraft registration information \
+openflight: airline data \
+ourairports: airport data \
 opensky network: live flight data (for your own usage only)
 
 ## Live Flights Data
