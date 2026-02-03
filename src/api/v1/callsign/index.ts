@@ -68,9 +68,11 @@ export default new Elysia({ prefix: "/callsign" })
                         })
                     ),
                 }),
+
                 400: t.Object({
                     error: t.String({ description: "Error message" })
                 }),
+                
                 404: t.Object({
                     error: t.String({ description: "Aircraft not found" })
                 })

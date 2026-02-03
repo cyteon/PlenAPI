@@ -1,7 +1,6 @@
 import { Elysia, redirect } from "elysia";
 import { swagger } from "@elysiajs/swagger";
 import { configDotenv } from "dotenv"; configDotenv();
-import { start } from "./lib/flights";
 
 import api from "./api";
 import cors from "@elysiajs/cors";
@@ -29,9 +28,3 @@ const app = new Elysia()
 console.log(
   `🦊 Elysia is running at http://${app.server?.hostname}:${app.server?.port}`
 );
-
-start().then(() => {
-  console.log("Flights data updater started");
-}).catch((error) => {
-  console.error("Failed to start flights data updater:", error);
-});
